@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -11,11 +15,18 @@ provider "aws" {
   region = "ap-northeast-1"  # Tokyo region
 }
 
+# Generate random password for Redshift admin
+resource "random_password" "redshift_admin" {
+  length           = 32
+  special          = true
+  override_special = "!#$%&*()-_=+?"  # Exclude problematic characters
+}
+
 # Namespace (database container)
 resource "aws_redshiftserverless_namespace" "main" {
   namespace_name      = "my-namespace"
   admin_username      = "admin"
-  admin_user_password = var.admin_password
+  admin_user_password = random_password.redshift_admin.result
   db_name             = "dev"
 }
 
